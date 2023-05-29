@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<!-- 计算属性和watch原理。数组响应式原理 -->
+		<!-- // 计算属性 依赖的值发生变化才会重新执行用户的方法
+		//计算属性中要维护一个dirty属性， 默认计算属性不会立刻执行
+		//计算属性就是一个defineProperty
+		//计算属性也是一个watcher，默认渲染会创造一个渲染watcher
+		//底层就是一个带有dirty属性的watcher -->
+
+		<!-- 
+			// 
+			计算属性 依赖的值发生变化才会重新执行用户的方法  计算属性中要维护一个dirty属性， 默认计算属性不会立刻执行
+				/计算属性就是一个defineProperty
+				计算属性也是一个watcher，默认渲染会创造一个渲染watcher
+				底层就是一个带有dirty属性的watcher
+				计算属性watcher1也要记住外层渲染的watcher，当计算属性计算的内容发生变话时，通知重新渲染
+				计算属性watcher里面的属性 也去收集上一层watcher(见state.js)
+
+				fitstName先收集计算属性watcher，取完值以后，把dirty标识为（脏值）true，如果还依赖其他的就继续收集
+
+				先存计算属性watcher，计算属性依赖值再存渲染watcher，执行自己的计算属性
+				后，把dirty标识为true，然后执行渲染watcher，渲染的时候dirty的true，重新渲染
+		 -->
+		<div id="app">{{firstname}}{{fullname}}{{fullname}}</div>
+		<script src="./vue.js"></script>
+		<script>
+			/**computed */
+			const vm = new Vue({
+				data() {
+					return {
+						// return {
+						firstname: "111",
+						lastname: "222",
+						age: 13,
+					};
+				},
+				computed: {
+					newName() {
+						return this.age;
+					},
+					// fullname: {
+					// 	get() {
+					// 		return this.firstname + this.lastname;
+					// 	},
+					// 	set() {
+					// 		console.log("fullname");
+					// 	},
+					// },
+					fullname() {
+						// defineProperty中的get方法
+						console.log("run");
+						// console.log(this.lastname);
+						return this.firstname + this.lastname + this.newName;
+						// 上面用到了两次fullname，只会调用一次
+					},
+				},
+				el: "#app",
+			});
+
+			setTimeout(() => {
+				vm.firstname = "张"; // 会执行什么？ 执行计算属性watcher更新操作  dirty = true;
+			}, 1000);
+			//这边改变了firstname会再调一次
+		</script>
+	</body>
+</html>
