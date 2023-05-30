@@ -982,6 +982,25 @@
   initLifecycle(Vue);
   initStateMixin(Vue);
   initGlobalAPI(Vue);
+  var render1 = compileToFunction("<li key='a' style=\"color:blue\">{{name}}</li>");
+  var vm1 = new Vue({
+    data: {
+      name: "zs"
+    }
+  });
+  var prevNode = render1.call(vm1);
+  var el = createElm(prevNode);
+  document.body.appendChild(el);
+  var render2 = compileToFunction("<li key='a' style=\"color:blue\"></li>");
+  var vm2 = new Vue({
+    data: {
+      name: "zs"
+    }
+  });
+  var nextNode = render2.call(vm2);
+  setTimeout(function () {
+    patch(prevNode, nextNode);
+  }, 1000);
 
   return Vue;
 
