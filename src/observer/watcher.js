@@ -6,21 +6,30 @@ let id = 0;
 //每个属性都有一个dep（属性是被观察者），watcher就是观察者（属性变化了会通知观察者更新）
 class Watcher {
 	//不同组件有不同的watcher
-	constructor(vm, fn, options) {
+	constructor(vm, exprOrFn, options, cb) {
 		this.id = id++;
 		this.renderWatcher = options; // 是一个渲染watcher
 
-		this.depsId = new Set();
-		this.getter = fn; // getter意味着调用这个函数可以发生取值操作
-		this.deps = []; //watcher记录dep，后续实现计算属性和一些清理工作需要使用
+		if (typeof exprOrFn === "string") {
+			this.getter = function () {
+				return vm[exprOrFn];
+			};
+		} else {
+			this.getter = exprOrFn; // getter意味着调用这个函数可以发生取值操作
+		}
 
+		this.depsId = new Set();
+
+		this.deps = []; //watcher记录dep，后续实现计算属性和一些清理工作需要使用
+		this.cb = cb;
 		this.lazy = options.lazy;
 		this.dirty = this.lazy; //缓存
-		this.lazy ? undefined : this.get(); //第一次的时候lazy为undefined，不会取值
+		// this.lazy ? undefined : this.get();
 		// this.get();
 		this.vm = vm;
+		this.user = options.user; // 标识是否是用户自己的watcher
 
-		this.value = this.lazy ? undefined : this.get();
+		this.value = this.lazy ? undefined : this.get(); //第一次的时候lazy为undefined，不会取值
 	}
 	get() {
 		pushTarget(this);
@@ -39,6 +48,7 @@ class Watcher {
 			this.depsId.add(id);
 			//dep记住watcher
 			dep.addSub(this);
+			// watcher已经记住了dep了而且去重了，此时让dep也记住watcher
 		}
 	}
 	evaluate() {
@@ -69,7 +79,12 @@ class Watcher {
 		}
 	}
 	run() {
-		this.get();
+		//watch
+		let oldValue = this.value;
+		let newValue = this.get(); // 渲染的时候用的是最新的vm来渲染的
+		if (this.user) {
+			this.cb.call(this.vm, newValue, oldValue);
+		}
 	}
 }
 

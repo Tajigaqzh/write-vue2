@@ -1,10 +1,14 @@
 import { initMixins } from "./init";
 import { initLifecycle } from "./lifecycle";
-import { nextTick } from "./observer/watcher";
+import { initStateMixin } from "./state";
+
+import { initGlobalAPI } from "./initGlobal";
 function Vue(options) {
 	this._init(options); //默认调用了init
 }
-Vue.prototype.$nextTick = nextTick;
 initMixins(Vue); //扩展了init方法
 initLifecycle(Vue);
+initStateMixin(Vue); // 实现了nextTick $watch
+initGlobalAPI(Vue);
+
 export default Vue;

@@ -124,18 +124,17 @@
         ob.observeArray(inserted);
       }
       ob.dep.notify();
-      console.log("更新啦", ob);
       return result;
     };
   });
 
-  function isFunction(val) {
+  function isFunction$1(val) {
     return typeof val === "function";
   }
   var isArray = Array.isArray;
 
   var id$1 = 0;
-  var Dep = function () {
+  var Dep$1 = function () {
     function Dep() {
       _classCallCheck(this, Dep);
       this.id = id$1++;
@@ -162,21 +161,21 @@
     }]);
     return Dep;
   }();
-  Dep.target = null;
+  Dep$1.target = null;
   var stack = [];
   function pushTarget(watcher) {
     stack.push(watcher);
-    Dep.target = watcher;
+    Dep$1.target = watcher;
   }
   function popTarget() {
     stack.pop();
-    Dep.target = stack[stack.length - 1];
+    Dep$1.target = stack[stack.length - 1];
   }
 
   var Observer = function () {
     function Observer(data) {
       _classCallCheck(this, Observer);
-      this.dep = new Dep();
+      this.dep = new Dep$1();
       Object.defineProperty(data, "__ob__", {
         value: this,
         enumerable: false
@@ -207,10 +206,10 @@
   }();
   function defineReactive(data, key, value) {
     var childOb = observe(value);
-    var dep = new Dep();
+    var dep = new Dep$1();
     Object.defineProperty(data, key, {
       get: function get() {
-        if (Dep.target) {
+        if (Dep$1.target) {
           dep.depend();
           if (childOb) {
             childOb.dep.depend();
@@ -248,19 +247,58 @@
     }
   }
 
+  function initComputed(vm) {
+    var computed = vm.$options.computed;
+    var watchers = vm._computedWatchers = {};
+    for (var key in computed) {
+      var useDef = computed[key];
+      var fn = isFunction(useDef) ? useDef : useDef.get;
+      watchers[key] = new Watcher(vm, fn, {
+        lazy: true
+      });
+      defineComputed(vm, key, useDef);
+    }
+  }
+  function defineComputed(target, key, useDef) {
+    var setter = useDef.set || function () {};
+    Object.defineProperty(target, key, {
+      get: createComputedGetter(key),
+      set: setter
+    });
+  }
+  function createComputedGetter(key) {
+    return function () {
+      var watcher = this._computedWatchers[key];
+      if (watcher.dirty) {
+        watcher.evaluate();
+      }
+      if (Dep.target) {
+        watcher.depend();
+      }
+      return watcher.value;
+    };
+  }
+
   var id = 0;
-  var Watcher = function () {
-    function Watcher(vm, fn, options) {
+  var Watcher$1 = function () {
+    function Watcher(vm, exprOrFn, options, cb) {
       _classCallCheck(this, Watcher);
       this.id = id++;
       this.renderWatcher = options;
+      if (typeof exprOrFn === "string") {
+        this.getter = function () {
+          return vm[exprOrFn];
+        };
+      } else {
+        this.getter = exprOrFn;
+      }
       this.depsId = new Set();
-      this.getter = fn;
       this.deps = [];
+      this.cb = cb;
       this.lazy = options.lazy;
       this.dirty = this.lazy;
-      this.lazy ? undefined : this.get();
       this.vm = vm;
+      this.user = options.user;
       this.value = this.lazy ? undefined : this.get();
     }
     _createClass(Watcher, [{
@@ -307,7 +345,11 @@
     }, {
       key: "run",
       value: function run() {
-        this.get();
+        var oldValue = this.value;
+        var newValue = this.get();
+        if (this.user) {
+          this.cb.call(this.vm, newValue, oldValue);
+        }
       }
     }]);
     return Watcher;
@@ -376,6 +418,34 @@
     });
   }
 
+  function initWatch(vm) {
+    var watch = vm.$options.watch;
+    for (var key in watch) {
+      var handler = watch[key];
+      if (isArray(handler)) {
+        for (var i = 0; i < handler.length; i++) {
+          createWatcher(vm, key, handler[i]);
+        }
+      } else {
+        createWatcher(vm, key, handler);
+      }
+    }
+  }
+  function createWatcher(vm, key, handler) {
+    if (typeof handler === "string") {
+      handler = vm[handler];
+    }
+    return vm.$watch(key, handler);
+  }
+
+  function initStateMixin(Vue) {
+    Vue.prototype.$nextTick = nextTick;
+    Vue.prototype.$watch = function (exprOrFn, cb) {
+      new Watcher$1(this, exprOrFn, {
+        user: true
+      }, cb);
+    };
+  }
   function initState(vm) {
     var options = vm.$options;
     if (options.data) {
@@ -387,10 +457,13 @@
     if (options.computed) {
       initComputed(vm);
     }
+    if (options.watch) {
+      initWatch(vm);
+    }
   }
   function initData(vm) {
     var data = vm.$options.data;
-    data = isFunction(data) ? getData(data, vm) : data || {};
+    data = isFunction$1(data) ? getData(data, vm) : data || {};
     vm._data = data;
     var ob = observe(data);
     ob && ob.vmCount++;
@@ -410,42 +483,11 @@
   }
   function getData(data, vm) {
     try {
-      return data.call(vm, vm);
+      return data.call(vm);
     } catch (e) {
       return {};
     } finally {
     }
-  }
-  function initComputed(vm) {
-    var computed = vm.$options.computed;
-    var watchers = vm._computedWatchers = {};
-    for (var key in computed) {
-      var useDef = computed[key];
-      var fn = isFunction(useDef) ? useDef : useDef.get;
-      watchers[key] = new Watcher(vm, fn, {
-        lazy: true
-      });
-      defineComputed(vm, key, useDef);
-    }
-  }
-  function defineComputed(target, key, useDef) {
-    var setter = useDef.set || function () {};
-    Object.defineProperty(target, key, {
-      get: createComputedGetter(key),
-      set: setter
-    });
-  }
-  function createComputedGetter(key) {
-    return function () {
-      var watcher = this._computedWatchers[key];
-      if (watcher.dirty) {
-        watcher.evaluate();
-      }
-      if (Dep.target) {
-        watcher.depend();
-      }
-      return watcher.value;
-    };
   }
 
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z]*";
@@ -639,13 +681,170 @@
       text: text
     };
   }
+  function isSameVnode(vnode1, vnode2) {
+    return vnode1.tag === vnode2.tag && vnode1.key === vnode2.key;
+  }
+
+  function createElm(vnode) {
+    var tag = vnode.tag,
+      data = vnode.data,
+      children = vnode.children,
+      text = vnode.text;
+    if (typeof tag === "string") {
+      vnode.el = document.createElement(tag);
+      patchProps(vnode.el, data);
+      children.forEach(function (child) {
+        vnode.el.appendChild(createElm(child));
+      });
+    } else {
+      vnode.el = document.createTextNode(text);
+    }
+    return vnode.el;
+  }
+  function patchProps(el) {
+    var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var oldStyles = oldProps.style || {};
+    var newStyles = props.style || {};
+    for (var key in oldStyles) {
+      if (!newStyles[key]) {
+        el.style[key] = "";
+      }
+    }
+    for (var _key in oldProps) {
+      if (!props[_key]) {
+        el.removeAttribute(_key);
+      }
+    }
+    for (var _key2 in props) {
+      if (_key2 === "style") {
+        for (var styleName in props.style) {
+          el.style[styleName] = props.style[styleName];
+        }
+      } else {
+        el.setAttribute(_key2, props[_key2]);
+      }
+    }
+  }
+  function patch(oldVNode, vnode) {
+    var isRealElement = oldVNode.nodeType;
+    if (isRealElement) {
+      var elm = oldVNode;
+      var parentElm = elm.parentNode;
+      var newElm = createElm(vnode);
+      parentElm.insertBefore(newElm, elm.nextSibling);
+      parentElm.removeChild(elm);
+      return newElm;
+    } else {
+      return patchVnode(oldVNode, vnode);
+    }
+  }
+  function patchVnode(oldVNode, vnode) {
+    if (!isSameVnode(oldVNode, vnode)) {
+      var _el = createElm(vnode);
+      oldVNode.el.parentNode.replaceChild(_el, oldVNode.el);
+      return _el;
+    }
+    var el = vnode.el = oldVNode.el;
+    if (!oldVNode.tag) {
+      if (oldVNode.text !== vnode.text) {
+        el.textContent = vnode.text;
+      }
+    }
+    patchProps(el, oldVNode.data, vnode.data);
+    var oldChildren = oldVNode.children || [];
+    var newChildren = vnode.children || [];
+    if (oldChildren.length > 0 && newChildren.length > 0) {
+      updateChildren(el, oldChildren, newChildren);
+    } else if (newChildren.length > 0) {
+      mountChildren(el, newChildren);
+    } else if (oldChildren.length > 0) {
+      el.innerHTML = "";
+    }
+    return el;
+  }
+  function mountChildren(el, newChildren) {
+    for (var i = 0; i < newChildren.length; i++) {
+      var child = newChildren[i];
+      el.appendChild(createElm(child));
+    }
+  }
+  function updateChildren(el, oldChildren, newChildren) {
+    var oldStartIndex = 0;
+    var newStartIndex = 0;
+    var oldEndIndex = oldChildren.length - 1;
+    var newEndIndex = newChildren.length - 1;
+    var oldStartVnode = oldChildren[0];
+    var newStartVnode = newChildren[0];
+    var oldEndVnode = oldChildren[oldEndIndex];
+    var newEndVnode = newChildren[newEndIndex];
+    function makeIndexByKey(children) {
+      var map = {};
+      children.forEach(function (child, index) {
+        map[child.key] = index;
+      });
+      return map;
+    }
+    var map = makeIndexByKey(oldChildren);
+    while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+      if (!oldStartVnode) {
+        oldStartVnode = oldChildren[++oldStartIndex];
+      } else if (!oldEndVnode) {
+        oldEndVnode = oldChildren[--oldEndIndex];
+      } else if (isSameVnode(oldStartVnode, newStartVnode)) {
+        patchVnode(oldStartVnode, newStartVnode);
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      } else if (isSameVnode(oldEndVnode, newEndVnode)) {
+        patchVnode(oldEndVnode, newEndVnode);
+        oldEndVnode = oldChildren[--oldEndIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      } else if (isSameVnode(oldEndVnode, newStartVnode)) {
+        patchVnode(oldEndVnode, newStartVnode);
+        el.insertBefore(oldEndVnode.el, oldStartVnode.el);
+        oldEndVnode = oldChildren[--oldEndIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      } else if (isSameVnode(oldStartVnode, newEndVnode)) {
+        patchVnode(oldStartVnode, newEndVnode);
+        el.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling);
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      } else {
+        var moveIndex = map[newStartVnode.key];
+        if (moveIndex !== undefined) {
+          var moveVnode = oldChildren[moveIndex];
+          el.insertBefore(moveVnode.el, oldStartVnode.el);
+          oldChildren[moveIndex] = undefined;
+          patchVnode(moveVnode, newStartVnode);
+        } else {
+          el.insertBefore(createElm(newStartVnode), oldStartVnode.el);
+        }
+        newStartVnode = newChildren[++newStartIndex];
+      }
+    }
+    if (newStartIndex <= newEndIndex) {
+      for (var i = newStartIndex; i <= newEndIndex; i++) {
+        var childEl = createElm(newChildren[i]);
+        var anchor = newChildren[newEndIndex + 1] ? newChildren[newEndIndex + 1].el : null;
+        el.insertBefore(childEl, anchor);
+      }
+    }
+    if (oldStartIndex <= oldEndIndex) {
+      for (var _i = oldStartIndex; _i <= oldEndIndex; _i++) {
+        if (oldChildren[_i]) {
+          var _childEl = oldChildren[_i].el;
+          el.removeChild(_childEl);
+        }
+      }
+    }
+  }
 
   function mountComponent(vm, el) {
     vm.$el = el;
     var updateComponent = function updateComponent() {
       vm._update(vm._render());
     };
-    new Watcher(vm, updateComponent, true);
+    new Watcher$1(vm, updateComponent, true);
   }
   function initLifecycle(Vue) {
     Vue.prototype._render = function () {
@@ -667,49 +866,46 @@
       return JSON.stringify(value);
     };
   }
-  function patch(oldVNode, vnode) {
-    var isRealElement = oldVNode.nodeType;
-    if (isRealElement) {
-      var elm = oldVNode;
-      var parentElm = elm.parentNode;
-      var newElm = createElm(vnode);
-      parentElm.insertBefore(newElm, elm.nextSibling);
-      parentElm.removeChild(elm);
-      return newElm;
-    }
-  }
-  function createElm(vnode) {
-    var tag = vnode.tag,
-      data = vnode.data,
-      children = vnode.children,
-      text = vnode.text;
-    if (typeof tag === "string") {
-      vnode.el = document.createElement(tag);
-      patchProps(vnode.el, data);
-      children.forEach(function (child) {
-        vnode.el.appendChild(createElm(child));
-      });
-    } else {
-      vnode.el = document.createTextNode(text);
-    }
-    return vnode.el;
-  }
-  function patchProps(el, props) {
-    for (var key in props) {
-      if (key === "style") {
-        for (var styleName in props.style) {
-          el.style[styleName] = props.style[styleName];
+
+  var strats$1 = {};
+  var LIFECYCLE = ["beforeCreate", "created"];
+  LIFECYCLE.forEach(function (hook) {
+    strats$1[hook] = function (p, c) {
+      if (c) {
+        if (p) {
+          return p.concat(c);
+        } else {
+          return [c];
         }
       } else {
-        el.setAttribute(key, props[key]);
+        return p;
+      }
+    };
+  });
+  function mergeOptions$1(parent, child) {
+    var options = {};
+    for (var key in parent) {
+      mergeField(key);
+    }
+    for (var _key in child) {
+      if (!parent.hasOwnProperty(_key)) {
+        mergeField(_key);
       }
     }
+    function mergeField(key) {
+      if (strats$1[key]) {
+        options[key] = strats$1[key](parent[key], child[key]);
+      } else {
+        options[key] = child[key] || parent[key];
+      }
+    }
+    return options;
   }
 
   function initMixins(Vue) {
     Vue.prototype._init = function (options) {
       var vm = this;
-      vm.$options = options;
+      vm.$options = mergeOptions$1(this.constructor.options, options);
       initState(vm);
       if (options.el) {
         vm.$mount(options.el);
@@ -737,12 +933,41 @@
     };
   }
 
+  function mergeOptions(parent, child) {
+    var options = {};
+    for (var key in parent) {
+      mergeField(key);
+    }
+    for (var _key in child) {
+      if (!parent.hasOwnProperty(_key)) {
+        mergeField(_key);
+      }
+    }
+    function mergeField(key) {
+      if (strats[key]) {
+        options[key] = strats[key](parent[key], child[key]);
+      } else {
+        options[key] = child[key] || parent[key];
+      }
+    }
+    return options;
+  }
+
+  function initGlobalAPI(Vue) {
+    Vue.options = {};
+    Vue.mixin = function (mixin) {
+      this.options = mergeOptions(this.options, mixin);
+      return this;
+    };
+  }
+
   function Vue(options) {
     this._init(options);
   }
-  Vue.prototype.$nextTick = nextTick;
   initMixins(Vue);
   initLifecycle(Vue);
+  initStateMixin(Vue);
+  initGlobalAPI(Vue);
 
   return Vue;
 

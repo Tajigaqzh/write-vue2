@@ -2,6 +2,8 @@
 import { initState } from "./state";
 import { compileToFunction } from "./compiler";
 import { mountComponent } from "./lifecycle";
+import { mergeOptions } from "./utils";
+
 export function initMixins(Vue) {
 	Vue.prototype._init = function (options) {
 		// vue  vm.$options 就是获取用户的配置
@@ -9,7 +11,10 @@ export function initMixins(Vue) {
 
 		const vm = this;
 		////把用户的配置挂载到实例上
-		vm.$options = options;
+		// vm.$options = options;
+
+		// 我们定义的全局指令和过滤器.... 都会挂载到实力上
+		vm.$options = mergeOptions(this.constructor.options, options); // 将用户的选项挂载到实例上
 		//初始化状态
 		initState(vm);
 

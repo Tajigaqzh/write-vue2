@@ -1,5 +1,6 @@
 import { createElementVNode, createTextVNode } from "./vdom/index";
 import Watcher from "./observer/watcher";
+import { patch } from "./vdom/patch";
 //组件挂载
 export function mountComponent(vm, el) {
 	//// 这里的el 是通过querySelector处理过的
@@ -48,38 +49,6 @@ export function initLifecycle(Vue) {
 		if (typeof value !== "object") return value;
 		return JSON.stringify(value);
 	};
-}
-
-function patch(oldVNode, vnode) {
-	// 写的是初渲染流程
-	const isRealElement = oldVNode.nodeType;
-	if (isRealElement) {
-		const elm = oldVNode; // 获取真实元素
-		const parentElm = elm.parentNode; // 拿到父元素
-		let newElm = createElm(vnode); //新元素
-		parentElm.insertBefore(newElm, elm.nextSibling);
-		parentElm.removeChild(elm); // 删除老节点
-
-		return newElm; //返回新dom
-	} else {
-		// diff算法
-	}
-}
-//根据vnode创建真实元素
-function createElm(vnode) {
-	let { tag, data, children, text } = vnode;
-	if (typeof tag === "string") {
-		// 标签
-		vnode.el = document.createElement(tag);
-		// 这里将真实节点和虚拟节点对应起来，后续如果修改属性了
-		patchProps(vnode.el, data);
-		children.forEach((child) => {
-			vnode.el.appendChild(createElm(child));
-		});
-	} else {
-		vnode.el = document.createTextNode(text);
-	}
-	return vnode.el;
 }
 
 /**

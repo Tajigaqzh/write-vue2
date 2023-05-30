@@ -1,6 +1,7 @@
 //重写数组中的部分方法
-let oldArrayProtoMethods = Array.prototype; //获取数组原型上的方法
-export let newArrayProtoMethods = Object.create(oldArrayProtoMethods); //传的参数是旧的原型
+let oldArrayProtoMethods = Array.prototype; //获取数组原型
+export let newArrayProtoMethods = Object.create(oldArrayProtoMethods);
+//根据旧的数组原型创建新的原型
 
 let methods = ["push", "pop", "shift", "unshift", "splice", "sort", "reverse"];
 
@@ -34,7 +35,7 @@ methods.forEach((method) => {
 		//数组变化啦通知对应的watche
 		// debugger;
 		ob.dep.notify();
-		console.log("更新啦", ob);
+		// console.log("更新啦", ob);
 
 		return result;
 	};

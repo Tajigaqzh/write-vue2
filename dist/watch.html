@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div id="app">{{firstname}}</div>
+		<script src="vue.js"></script>
+		<!-- <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js"></script> -->
+		<script>
+			const vm = new Vue({
+				el: "#app",
+				data: {
+					firstname: "珠",
+					lastname: "峰",
+					age: 13,
+				},
+				// 直接写一个函数
+				// 数组写法
+				watch: {
+					firstname(newValue, oldValue) {
+						console.log("new", newValue, "old", oldValue);
+					},
+				},
+			});
+			// 底层就算你写的是上面的方式 也会被转化成$watch的写法
+			// vm.$watch(function exprOrFn(){return vm.fullname},function cb(newValue,oldValue){
+			//     console.log(newValue,oldValue,'11')
+			// })
+
+			setTimeout(() => {
+				vm.firstname = "xxx"; // 会执行什么？ 执行计算属性watcher更新操作  dirty = true;
+				// vm.firstname = '123';
+				// vm.firstname = '456';
+			}, 1000);
+
+			setTimeout(() => {
+				vm.firstname = "12343";
+			}, 2000);
+		</script>
+	</body>
+</html>
