@@ -7,7 +7,7 @@
 		<title>Document</title>
 	</head>
 	<body>
-		<div id="app">{{firstname}}</div>
+		<div id="app">{{firstname}}{{newName}}</div>
 		<script src="vue.js"></script>
 		<!-- <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js"></script> -->
 		<script>
@@ -18,6 +18,12 @@
 					lastname: "峰",
 					age: 13,
 				},
+				computed: {
+					newName() {
+						return this.age;
+					},
+				},
+
 				// 直接写一个函数
 				// 数组写法
 				watch: {
@@ -31,15 +37,9 @@
 			//     console.log(newValue,oldValue,'11')
 			// })
 
-			setTimeout(() => {
-				vm.firstname = "xxx"; // 会执行什么？ 执行计算属性watcher更新操作  dirty = true;
-				// vm.firstname = '123';
-				// vm.firstname = '456';
-			}, 1000);
-
-			setTimeout(() => {
+			/* setTimeout(() => {
 				vm.firstname = "12343";
-			}, 2000);
+			}, 2000); */
 		</script>
 	</body>
 </html>

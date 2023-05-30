@@ -128,13 +128,13 @@
     };
   });
 
-  function isFunction$1(val) {
+  function isFunction(val) {
     return typeof val === "function";
   }
   var isArray = Array.isArray;
 
   var id$1 = 0;
-  var Dep$1 = function () {
+  var Dep = function () {
     function Dep() {
       _classCallCheck(this, Dep);
       this.id = id$1++;
@@ -161,21 +161,21 @@
     }]);
     return Dep;
   }();
-  Dep$1.target = null;
+  Dep.target = null;
   var stack = [];
   function pushTarget(watcher) {
     stack.push(watcher);
-    Dep$1.target = watcher;
+    Dep.target = watcher;
   }
   function popTarget() {
     stack.pop();
-    Dep$1.target = stack[stack.length - 1];
+    Dep.target = stack[stack.length - 1];
   }
 
   var Observer = function () {
     function Observer(data) {
       _classCallCheck(this, Observer);
-      this.dep = new Dep$1();
+      this.dep = new Dep();
       Object.defineProperty(data, "__ob__", {
         value: this,
         enumerable: false
@@ -206,10 +206,10 @@
   }();
   function defineReactive(data, key, value) {
     var childOb = observe(value);
-    var dep = new Dep$1();
+    var dep = new Dep();
     Object.defineProperty(data, key, {
       get: function get() {
-        if (Dep$1.target) {
+        if (Dep.target) {
           dep.depend();
           if (childOb) {
             childOb.dep.depend();
@@ -247,40 +247,8 @@
     }
   }
 
-  function initComputed(vm) {
-    var computed = vm.$options.computed;
-    var watchers = vm._computedWatchers = {};
-    for (var key in computed) {
-      var useDef = computed[key];
-      var fn = isFunction(useDef) ? useDef : useDef.get;
-      watchers[key] = new Watcher(vm, fn, {
-        lazy: true
-      });
-      defineComputed(vm, key, useDef);
-    }
-  }
-  function defineComputed(target, key, useDef) {
-    var setter = useDef.set || function () {};
-    Object.defineProperty(target, key, {
-      get: createComputedGetter(key),
-      set: setter
-    });
-  }
-  function createComputedGetter(key) {
-    return function () {
-      var watcher = this._computedWatchers[key];
-      if (watcher.dirty) {
-        watcher.evaluate();
-      }
-      if (Dep.target) {
-        watcher.depend();
-      }
-      return watcher.value;
-    };
-  }
-
   var id = 0;
-  var Watcher$1 = function () {
+  var Watcher = function () {
     function Watcher(vm, exprOrFn, options, cb) {
       _classCallCheck(this, Watcher);
       this.id = id++;
@@ -418,6 +386,38 @@
     });
   }
 
+  function initComputed(vm) {
+    var computed = vm.$options.computed;
+    var watchers = vm._computedWatchers = {};
+    for (var key in computed) {
+      var useDef = computed[key];
+      var fn = isFunction(useDef) ? useDef : useDef.get;
+      watchers[key] = new Watcher(vm, fn, {
+        lazy: true
+      });
+      defineComputed(vm, key, useDef);
+    }
+  }
+  function defineComputed(target, key, useDef) {
+    var setter = useDef.set || function () {};
+    Object.defineProperty(target, key, {
+      get: createComputedGetter(key),
+      set: setter
+    });
+  }
+  function createComputedGetter(key) {
+    return function () {
+      var watcher = this._computedWatchers[key];
+      if (watcher.dirty) {
+        watcher.evaluate();
+      }
+      if (Dep.target) {
+        watcher.depend();
+      }
+      return watcher.value;
+    };
+  }
+
   function initWatch(vm) {
     var watch = vm.$options.watch;
     for (var key in watch) {
@@ -441,7 +441,7 @@
   function initStateMixin(Vue) {
     Vue.prototype.$nextTick = nextTick;
     Vue.prototype.$watch = function (exprOrFn, cb) {
-      new Watcher$1(this, exprOrFn, {
+      new Watcher(this, exprOrFn, {
         user: true
       }, cb);
     };
@@ -463,7 +463,7 @@
   }
   function initData(vm) {
     var data = vm.$options.data;
-    data = isFunction$1(data) ? getData(data, vm) : data || {};
+    data = isFunction(data) ? getData(data, vm) : data || {};
     vm._data = data;
     var ob = observe(data);
     ob && ob.vmCount++;
@@ -701,28 +701,14 @@
     }
     return vnode.el;
   }
-  function patchProps(el) {
-    var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    var oldStyles = oldProps.style || {};
-    var newStyles = props.style || {};
-    for (var key in oldStyles) {
-      if (!newStyles[key]) {
-        el.style[key] = "";
-      }
-    }
-    for (var _key in oldProps) {
-      if (!props[_key]) {
-        el.removeAttribute(_key);
-      }
-    }
-    for (var _key2 in props) {
-      if (_key2 === "style") {
+  function patchProps(el, props) {
+    for (var key in props) {
+      if (key === "style") {
         for (var styleName in props.style) {
           el.style[styleName] = props.style[styleName];
         }
       } else {
-        el.setAttribute(_key2, props[_key2]);
+        el.setAttribute(key, props[key]);
       }
     }
   }
@@ -839,13 +825,6 @@
     }
   }
 
-  function mountComponent(vm, el) {
-    vm.$el = el;
-    var updateComponent = function updateComponent() {
-      vm._update(vm._render());
-    };
-    new Watcher$1(vm, updateComponent, true);
-  }
   function initLifecycle(Vue) {
     Vue.prototype._render = function () {
       return this.$options.render.call(this);
@@ -866,11 +845,18 @@
       return JSON.stringify(value);
     };
   }
+  function mountComponent(vm, el) {
+    vm.$el = el;
+    var updateComponent = function updateComponent() {
+      vm._update(vm._render());
+    };
+    new Watcher(vm, updateComponent, true);
+  }
 
-  var strats$1 = {};
+  var strats = {};
   var LIFECYCLE = ["beforeCreate", "created"];
   LIFECYCLE.forEach(function (hook) {
-    strats$1[hook] = function (p, c) {
+    strats[hook] = function (p, c) {
       if (c) {
         if (p) {
           return p.concat(c);
@@ -882,7 +868,7 @@
       }
     };
   });
-  function mergeOptions$1(parent, child) {
+  function mergeOptions(parent, child) {
     var options = {};
     for (var key in parent) {
       mergeField(key);
@@ -893,8 +879,8 @@
       }
     }
     function mergeField(key) {
-      if (strats$1[key]) {
-        options[key] = strats$1[key](parent[key], child[key]);
+      if (strats[key]) {
+        options[key] = strats[key](parent[key], child[key]);
       } else {
         options[key] = child[key] || parent[key];
       }
@@ -905,7 +891,7 @@
   function initMixins(Vue) {
     Vue.prototype._init = function (options) {
       var vm = this;
-      vm.$options = mergeOptions$1(this.constructor.options, options);
+      vm.$options = mergeOptions(this.constructor.options, options);
       initState(vm);
       if (options.el) {
         vm.$mount(options.el);
@@ -931,26 +917,6 @@
       }
       mountComponent(vm, el);
     };
-  }
-
-  function mergeOptions(parent, child) {
-    var options = {};
-    for (var key in parent) {
-      mergeField(key);
-    }
-    for (var _key in child) {
-      if (!parent.hasOwnProperty(_key)) {
-        mergeField(_key);
-      }
-    }
-    function mergeField(key) {
-      if (strats[key]) {
-        options[key] = strats[key](parent[key], child[key]);
-      } else {
-        options[key] = child[key] || parent[key];
-      }
-    }
-    return options;
   }
 
   function initGlobalAPI(Vue) {

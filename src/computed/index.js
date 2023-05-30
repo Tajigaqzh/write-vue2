@@ -1,3 +1,7 @@
+import { isFunction } from "../shared/utils";
+import Dep from "../observer/dep";
+
+import Watcher from "../observer/watcher";
 export function initComputed(vm) {
 	const computed = vm.$options.computed;
 	const watchers = (vm._computedWatchers = {}); // 将计算属性watcher保存到vm上

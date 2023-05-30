@@ -2,7 +2,7 @@
 import { initState } from "./state";
 import { compileToFunction } from "./compiler";
 import { mountComponent } from "./lifecycle";
-import { mergeOptions } from "./utils";
+import { mergeOptions } from "./util";
 
 export function initMixins(Vue) {
 	Vue.prototype._init = function (options) {

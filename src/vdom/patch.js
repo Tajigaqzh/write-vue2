@@ -16,26 +16,12 @@ function createElm(vnode) {
 	}
 	return vnode.el;
 }
-export function patchProps(el, oldProps = {}, props = {}) {
-	// 老的属性中有，新的没有  要删除老的
-	let oldStyles = oldProps.style || {};
-	let newStyles = props.style || {};
-	for (let key in oldStyles) {
-		// 老的样式中有 新的吗，没有则删除
-		if (!newStyles[key]) {
-			el.style[key] = "";
-		}
-	}
 
-	for (let key in oldProps) {
-		// 老的属性中有
-		if (!props[key]) {
-			// 新的没有删除属性
-			el.removeAttribute(key);
-		}
-	}
+/**
+ * 更新属性
+ */
+function patchProps(el, props) {
 	for (let key in props) {
-		// 用新的覆盖老的
 		if (key === "style") {
 			// style{color:'red'}
 			for (let styleName in props.style) {
@@ -46,6 +32,15 @@ export function patchProps(el, oldProps = {}, props = {}) {
 		}
 	}
 }
+//vue核心流程：
+//1.创造响应式数据
+//2.将模板转换成ast语法树，
+//3.将ast语法树转换成render函数
+//4.后续每次更新只调用render
+
+//render会产生虚拟节点（使用响应式数据）
+//根据生成的虚拟节点生成真实dom
+
 export function patch(oldVNode, vnode) {
 	// 写的是初渲染流程
 	const isRealElement = oldVNode.nodeType;
