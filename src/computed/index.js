@@ -1,6 +1,5 @@
 import { isFunction } from "../shared/utils";
 import Dep from "../observer/dep";
-
 import Watcher from "../observer/watcher";
 export function initComputed(vm) {
 	const computed = vm.$options.computed;

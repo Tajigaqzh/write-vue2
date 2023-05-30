@@ -438,14 +438,6 @@
     return vm.$watch(key, handler);
   }
 
-  function initStateMixin(Vue) {
-    Vue.prototype.$nextTick = nextTick;
-    Vue.prototype.$watch = function (exprOrFn, cb) {
-      new Watcher(this, exprOrFn, {
-        user: true
-      }, cb);
-    };
-  }
   function initState(vm) {
     var options = vm.$options;
     if (options.data) {
@@ -483,7 +475,7 @@
   }
   function getData(data, vm) {
     try {
-      return data.call(vm);
+      return data.call(vm, vm);
     } catch (e) {
       return {};
     } finally {
@@ -916,14 +908,6 @@
         }
       }
       mountComponent(vm, el);
-    };
-  }
-
-  function initGlobalAPI(Vue) {
-    Vue.options = {};
-    Vue.mixin = function (mixin) {
-      this.options = mergeOptions(this.options, mixin);
-      return this;
     };
   }
 
