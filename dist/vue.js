@@ -153,7 +153,6 @@
     }, {
       key: "notify",
       value: function notify() {
-        console.log("notify被调用了");
         this.subs.forEach(function (watcher) {
           watcher.update();
         });
@@ -438,6 +437,14 @@
     return vm.$watch(key, handler);
   }
 
+  function initStateMixin(Vue) {
+    Vue.prototype.$nextTick = nextTick;
+    Vue.prototype.$watch = function (exprOrFn, cb) {
+      new Watcher(this, exprOrFn, {
+        user: true
+      }, cb);
+    };
+  }
   function initState(vm) {
     var options = vm.$options;
     if (options.data) {
@@ -693,14 +700,28 @@
     }
     return vnode.el;
   }
-  function patchProps(el, props) {
-    for (var key in props) {
-      if (key === "style") {
+  function patchProps(el) {
+    var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var oldStyles = oldProps.style || {};
+    var newStyles = props.style || {};
+    for (var key in oldStyles) {
+      if (!newStyles[key]) {
+        el.style[key] = "";
+      }
+    }
+    for (var _key in oldProps) {
+      if (!props[_key]) {
+        el.removeAttribute(_key);
+      }
+    }
+    for (var _key2 in props) {
+      if (_key2 === "style") {
         for (var styleName in props.style) {
           el.style[styleName] = props.style[styleName];
         }
       } else {
-        el.setAttribute(key, props[key]);
+        el.setAttribute(_key2, props[_key2]);
       }
     }
   }
@@ -845,8 +866,74 @@
     new Watcher(vm, updateComponent, true);
   }
 
+  var strats$1 = {};
+  var LIFECYCLE$1 = ["beforeCreate", "created"];
+  LIFECYCLE$1.forEach(function (hook) {
+    strats$1[hook] = function (p, c) {
+      if (c) {
+        if (p) {
+          return p.concat(c);
+        } else {
+          return [c];
+        }
+      } else {
+        return p;
+      }
+    };
+  });
+  function mergeOptions$1(parent, child) {
+    var options = {};
+    for (var key in parent) {
+      mergeField(key);
+    }
+    for (var _key in child) {
+      if (!parent.hasOwnProperty(_key)) {
+        mergeField(_key);
+      }
+    }
+    function mergeField(key) {
+      if (strats$1[key]) {
+        options[key] = strats$1[key](parent[key], child[key]);
+      } else {
+        options[key] = child[key] || parent[key];
+      }
+    }
+    return options;
+  }
+
+  function initMixins(Vue) {
+    Vue.prototype._init = function (options) {
+      var vm = this;
+      vm.$options = mergeOptions$1(this.constructor.options, options);
+      initState(vm);
+      if (options.el) {
+        vm.$mount(options.el);
+      }
+    };
+    Vue.prototype.$mount = function (el) {
+      var vm = this;
+      el = document.querySelector(el);
+      var ops = vm.$options;
+      if (!ops.render) {
+        var template;
+        if (!ops.template && el) {
+          template = el.outerHTML;
+        } else {
+          if (el) {
+            template = ops.template;
+          }
+        }
+        if (template) {
+          var render = compileToFunction(template);
+          ops.render = render;
+        }
+      }
+      mountComponent(vm, el);
+    };
+  }
+
   var strats = {};
-  var LIFECYCLE = ["beforeCreate", "created"];
+  var LIFECYCLE = ['beforeCreate', 'created'];
   LIFECYCLE.forEach(function (hook) {
     strats[hook] = function (p, c) {
       if (c) {
@@ -880,34 +967,11 @@
     return options;
   }
 
-  function initMixins(Vue) {
-    Vue.prototype._init = function (options) {
-      var vm = this;
-      vm.$options = mergeOptions(this.constructor.options, options);
-      initState(vm);
-      if (options.el) {
-        vm.$mount(options.el);
-      }
-    };
-    Vue.prototype.$mount = function (el) {
-      var vm = this;
-      el = document.querySelector(el);
-      var ops = vm.$options;
-      if (!ops.render) {
-        var template;
-        if (!ops.template && el) {
-          template = el.outerHTML;
-        } else {
-          if (el) {
-            template = ops.template;
-          }
-        }
-        if (template) {
-          var render = compileToFunction(template);
-          ops.render = render;
-        }
-      }
-      mountComponent(vm, el);
+  function initGlobalAPI(Vue) {
+    Vue.options = {};
+    Vue.mixin = function (mixin) {
+      this.options = mergeOptions(this.options, mixin);
+      return this;
     };
   }
 

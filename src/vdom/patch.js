@@ -1,7 +1,7 @@
 import { isSameVnode } from ".";
 
 //根据vnode创建真实元素
-function createElm(vnode) {
+export function createElm(vnode) {
 	let { tag, data, children, text } = vnode;
 	if (typeof tag === "string") {
 		// 标签
@@ -20,8 +20,39 @@ function createElm(vnode) {
 /**
  * 更新属性
  */
-function patchProps(el, props) {
+// function patchProps(el, props) {
+// 	for (let key in props) {
+// 		if (key === "style") {
+// 			// style{color:'red'}
+// 			for (let styleName in props.style) {
+// 				el.style[styleName] = props.style[styleName];
+// 			}
+// 		} else {
+// 			el.setAttribute(key, props[key]);
+// 		}
+// 	}
+// }
+
+export function patchProps(el, oldProps = {}, props = {}) {
+	// 老的属性中有，新的没有  要删除老的
+	let oldStyles = oldProps.style || {};
+	let newStyles = props.style || {};
+	for (let key in oldStyles) {
+		// 老的样式中有 新的吗，没有则删除
+		if (!newStyles[key]) {
+			el.style[key] = "";
+		}
+	}
+
+	for (let key in oldProps) {
+		// 老的属性中有
+		if (!props[key]) {
+			// 新的没有删除属性
+			el.removeAttribute(key);
+		}
+	}
 	for (let key in props) {
+		// 用新的覆盖老的
 		if (key === "style") {
 			// style{color:'red'}
 			for (let styleName in props.style) {

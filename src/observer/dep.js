@@ -20,7 +20,7 @@ class Dep {
 	}
 
 	notify() {
-		console.log("notify被调用了");
+		// console.log("notify被调用了");
 		this.subs.forEach((watcher) => {
 			watcher.update(); //告诉watcher要更新了
 		});
