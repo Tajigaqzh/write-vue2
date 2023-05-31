@@ -16,7 +16,7 @@ LIFECYCLE.forEach((hook) => {
 		}
 	};
 });
-
+//把子组件的选项挂到父组件上
 export function mergeOptions(parent, child) {
 	const options = {};
 	for (let key in parent) {

@@ -206,6 +206,7 @@ function updateChildren(el, oldChildren, newChildren) {
 			newStartVnode = newChildren[++newStartIndex];
 		}
 	}
+
 	if (newStartIndex <= newEndIndex) {
 		// 新的多了 多余的就插入进去
 		for (let i = newStartIndex; i <= newEndIndex; i++) {

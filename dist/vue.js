@@ -866,74 +866,8 @@
     new Watcher(vm, updateComponent, true);
   }
 
-  var strats$1 = {};
-  var LIFECYCLE$1 = ["beforeCreate", "created"];
-  LIFECYCLE$1.forEach(function (hook) {
-    strats$1[hook] = function (p, c) {
-      if (c) {
-        if (p) {
-          return p.concat(c);
-        } else {
-          return [c];
-        }
-      } else {
-        return p;
-      }
-    };
-  });
-  function mergeOptions$1(parent, child) {
-    var options = {};
-    for (var key in parent) {
-      mergeField(key);
-    }
-    for (var _key in child) {
-      if (!parent.hasOwnProperty(_key)) {
-        mergeField(_key);
-      }
-    }
-    function mergeField(key) {
-      if (strats$1[key]) {
-        options[key] = strats$1[key](parent[key], child[key]);
-      } else {
-        options[key] = child[key] || parent[key];
-      }
-    }
-    return options;
-  }
-
-  function initMixins(Vue) {
-    Vue.prototype._init = function (options) {
-      var vm = this;
-      vm.$options = mergeOptions$1(this.constructor.options, options);
-      initState(vm);
-      if (options.el) {
-        vm.$mount(options.el);
-      }
-    };
-    Vue.prototype.$mount = function (el) {
-      var vm = this;
-      el = document.querySelector(el);
-      var ops = vm.$options;
-      if (!ops.render) {
-        var template;
-        if (!ops.template && el) {
-          template = el.outerHTML;
-        } else {
-          if (el) {
-            template = ops.template;
-          }
-        }
-        if (template) {
-          var render = compileToFunction(template);
-          ops.render = render;
-        }
-      }
-      mountComponent(vm, el);
-    };
-  }
-
   var strats = {};
-  var LIFECYCLE = ['beforeCreate', 'created'];
+  var LIFECYCLE = ["beforeCreate", "created"];
   LIFECYCLE.forEach(function (hook) {
     strats[hook] = function (p, c) {
       if (c) {
@@ -967,11 +901,59 @@
     return options;
   }
 
+  function initMixins(Vue) {
+    Vue.prototype._init = function (options) {
+      var vm = this;
+      vm.$options = mergeOptions(this.constructor.options, options);
+      initState(vm);
+      if (options.el) {
+        vm.$mount(options.el);
+      }
+    };
+    Vue.prototype.$mount = function (el) {
+      var vm = this;
+      el = document.querySelector(el);
+      var ops = vm.$options;
+      if (!ops.render) {
+        var template;
+        if (!ops.template && el) {
+          template = el.outerHTML;
+        } else {
+          if (el) {
+            template = ops.template;
+          }
+        }
+        if (template) {
+          var render = compileToFunction(template);
+          ops.render = render;
+        }
+      }
+      mountComponent(vm, el);
+    };
+  }
+
   function initGlobalAPI(Vue) {
-    Vue.options = {};
+    Vue.options = {
+      _base: Vue
+    };
     Vue.mixin = function (mixin) {
       this.options = mergeOptions(this.options, mixin);
       return this;
+    };
+    Vue.options.components = {};
+    Vue.extend = function () {
+      function Sub() {
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        this._init(options);
+      }
+      Sub.prototype = Object.create(Vue.prototype);
+      Sub.prototype.constructor = Sub;
+      Sub.options = mergeOptions(Vue.options, options);
+      return Sub;
+    };
+    Vue.component = function (id, definition) {
+      definition = _typeof(isFunction(definition)) ? definition : Vue.extend(definition);
+      Vue.options.components[id] = definition;
     };
   }
 

@@ -13,7 +13,7 @@ export function initMixins(Vue) {
 		////把用户的配置挂载到实例上
 		// vm.$options = options;
 
-		// 我们定义的全局指令和过滤器.... 都会挂载到实力上
+		// 我们定义的全局指令和过滤器.... 都会挂载到实例上
 		vm.$options = mergeOptions(this.constructor.options, options); // 将用户的选项挂载到实例上
 		//初始化状态
 		initState(vm);
