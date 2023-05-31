@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+
+    <body>
+        <div id="app">
+            <my-button></my-button>
+            <my-button></my-button>
+        </div>
+        <div id="root"></div>
+        <script src="./vue.js"></script>
+        <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js"></script> -->
+        <script>
+            // 根实例
+            // 组件的三大特性 自定义标签   组件里面有自己的属性和事件   组件的插槽 (webcomponent)
+
+            // 声明组件  全局组件  Vue.extend
+
+            Vue.component('my-button', { // Vue.options.components = {}
+                template: '<button>全局button</button>'
+            })
+
+            // 在处理属性的时候 要维护一下  components:{my-button} .__proto__ = my-button
+
+
+            // 模板-> ast语法树-> 生成虚拟dom  -> 需要对元素再次分类 分类成组件的虚拟节点
+            // 在模板渲染的时候 需要查找my-button组件
+            let Sub = Vue.extend({
+                template: '<div>子组件   <my-button></my-button>  <my-button></my-button>  <my-button></my-button></div>',
+                components: {
+                    'my-button': {
+                        template: '<button>子组件自己生命的button</button>'
+                    }
+                }
+            });
+            new Sub().$mount('#root'); // 会再去创建一个子组件的watcher
+
+
+            // const vm = new Vue({
+            //     el: '#app',
+            //     data() {
+            //         return { name: 'zf' }
+            //     },
+            //     components:{ // js中的原型链    内部可能是一个继承的模型
+            //         'my-button':Vue.extend({
+            //             template:'<button>inner Button</button>'
+            //         })
+            //     }
+            // });
+
+        </script>
+    </body>
+
+    </html>
+</body>
+
+</html>

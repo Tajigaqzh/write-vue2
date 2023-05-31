@@ -1,7 +1,7 @@
 //初始化文件，用于初始化vue实例
 import { initState } from "./state";
 import { compileToFunction } from "./compiler";
-import { mountComponent } from "./lifecycle";
+import { callHook, mountComponent } from "./lifecycle";
 import { mergeOptions } from "./util";
 
 export function initMixins(Vue) {
@@ -15,9 +15,12 @@ export function initMixins(Vue) {
 
 		// 我们定义的全局指令和过滤器.... 都会挂载到实例上
 		vm.$options = mergeOptions(this.constructor.options, options); // 将用户的选项挂载到实例上
+		console.log(vm.$options);
+		callHook(vm, "beforeCreate"); // 内部调用的是beforeCreate 写错了就不执行了
 		//初始化状态
 		initState(vm);
 
+		callHook(vm, "created");
 		// 如果用户传入了el属性，需要将页面渲染出来
 		if (options.el) {
 			vm.$mount(options.el);

@@ -7,6 +7,7 @@ LIFECYCLE.forEach((hook) => {
 		if (c) {
 			// 如果儿子有 父亲有   让父亲和儿子拼在一起
 			if (p) {
+				console.log("lefe");
 				return p.concat(c);
 			} else {
 				return [c]; // 儿子有父亲没有 ，则将儿子包装成数组

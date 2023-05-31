@@ -132,6 +132,12 @@
     return typeof val === "function";
   }
   var isArray = Array.isArray;
+  function isReservedTag(tag) {
+    return ["a", "div", "p", "button", "ul", "li", "span"].includes(tag);
+  }
+  function isObject(isObj) {
+    return _typeof(isObj) === "object";
+  }
 
   var id$1 = 0;
   var Dep = function () {
@@ -462,7 +468,7 @@
   }
   function initData(vm) {
     var data = vm.$options.data;
-    data = isFunction(data) ? getData(data, vm) : data || {};
+    data = isFunction(data) ? getData(data, vm) : data;
     vm._data = data;
     var ob = observe(data);
     ob && ob.vmCount++;
@@ -665,23 +671,44 @@
     for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
       children[_key - 3] = arguments[_key];
     }
-    return vnode(vm, tag, key, data, children);
+    if (isReservedTag(tag)) {
+      return vnode(vm, tag, key, data, children);
+    } else {
+      var Ctor = vm.$options.components[tag];
+      return createComponentVnode(vm, tag, key, data, children, Ctor);
+    }
   }
   function createTextVNode(vm, text) {
     return vnode(vm, undefined, undefined, undefined, undefined, text);
   }
-  function vnode(vm, tag, key, data, children, text) {
+  function vnode(vm, tag, key, data, children, text, componentOptions) {
     return {
       vm: vm,
       tag: tag,
       key: key,
       data: data,
       children: children,
-      text: text
+      text: text,
+      componentOptions: componentOptions
     };
   }
   function isSameVnode(vnode1, vnode2) {
     return vnode1.tag === vnode2.tag && vnode1.key === vnode2.key;
+  }
+  function createComponentVnode(vm, tag, key, data, children, Ctor) {
+    if (isObject(Ctor)) {
+      Ctor = vm.$options._base.extend(Ctor);
+    }
+    debugger;
+    data.hook = {
+      init: function init(vnode) {
+        instance.$mount();
+        console.log(instance);
+      }
+    };
+    return vnode(vm, tag, key, data, children, null, {
+      Ctor: Ctor
+    });
   }
 
   function createElm(vnode) {
@@ -865,6 +892,14 @@
     };
     new Watcher(vm, updateComponent, true);
   }
+  function callHook(vm, hook) {
+    var handlers = vm.$options[hook];
+    if (handlers) {
+      handlers.forEach(function (handler) {
+        return handler.call(vm);
+      });
+    }
+  }
 
   var strats = {};
   var LIFECYCLE = ["beforeCreate", "created"];
@@ -872,6 +907,7 @@
     strats[hook] = function (p, c) {
       if (c) {
         if (p) {
+          console.log("lefe");
           return p.concat(c);
         } else {
           return [c];
@@ -905,7 +941,10 @@
     Vue.prototype._init = function (options) {
       var vm = this;
       vm.$options = mergeOptions(this.constructor.options, options);
+      console.log(vm.$options);
+      callHook(vm, "beforeCreate");
       initState(vm);
+      callHook(vm, "created");
       if (options.el) {
         vm.$mount(options.el);
       }
@@ -941,7 +980,7 @@
       return this;
     };
     Vue.options.components = {};
-    Vue.extend = function () {
+    Vue.extend = function (options) {
       function Sub() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         this._init(options);
@@ -964,25 +1003,6 @@
   initLifecycle(Vue);
   initStateMixin(Vue);
   initGlobalAPI(Vue);
-  var render1 = compileToFunction("<li key='a' style=\"color:blue\">{{name}}</li>");
-  var vm1 = new Vue({
-    data: {
-      name: "zs"
-    }
-  });
-  var prevNode = render1.call(vm1);
-  var el = createElm(prevNode);
-  document.body.appendChild(el);
-  var render2 = compileToFunction("<li key='a' style=\"color:blue\"></li>");
-  var vm2 = new Vue({
-    data: {
-      name: "zs"
-    }
-  });
-  var nextNode = render2.call(vm2);
-  setTimeout(function () {
-    patch(prevNode, nextNode);
-  }, 1000);
 
   return Vue;
 

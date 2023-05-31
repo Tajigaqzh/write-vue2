@@ -15,10 +15,12 @@ export function initGlobalAPI(Vue) {
 	//初始化components
 	Vue.options.components = {};
 	//可以通过extend进行组件挂载
-	Vue.extend = function () {
+	Vue.extend = function (options) {
 		//根据用户传递的参数，返回一个构造函数
 		function Sub(options = {}) {
+			// 最终使用一个组件 就是new一个实例
 			this._init(options);
+			// 就是默认对子类进行初始化操作
 		}
 		//让sub继承自vue
 		Sub.prototype = Object.create(Vue.prototype);

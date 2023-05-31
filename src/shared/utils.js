@@ -26,6 +26,10 @@ export function isString(val) {
 	return typeof val === "string";
 }
 
-export function isReverseTag(tag) {
-	return ["div", "span", ""].includes(tag);
+export function isReservedTag(tag) {
+	return ["a", "div", "p", "button", "ul", "li", "span"].includes(tag);
+}
+
+export function isObject(isObj) {
+	return typeof isObj === "object";
 }

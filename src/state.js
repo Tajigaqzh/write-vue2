@@ -38,7 +38,7 @@ export function initState(vm) {
 function initData(vm) {
 	let data = vm.$options.data;
 	//data可能是函数，也可能是对象
-	data = isFunction(data) ? getData(data, vm) : data || {};
+	data = isFunction(data) ? getData(data, vm) : data;
 	vm._data = data; //data是用户返回的对象
 
 	/* const keys = Object.keys(data);

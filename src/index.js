@@ -2,8 +2,6 @@ import { initMixins } from "./init";
 import { initLifecycle } from "./lifecycle";
 import { initStateMixin } from "./state";
 import { initGlobalAPI } from "./gloablAPI";
-import { compileToFunction } from "./compiler";
-import { createElm, patch } from "./vdom/patch";
 function Vue(options) {
 	this._init(options); //默认调用了init
 }
@@ -15,7 +13,7 @@ initGlobalAPI(Vue);
 
 // -------------------------------观察前后的虚拟节点
 
-let render1 = compileToFunction(`<li key='a' style="color:blue">{{name}}</li>`);
+/* let render1 = compileToFunction(`<li key='a' style="color:blue">{{name}}</li>`);
 
 let vm1 = new Vue({ data: { name: "zs" } });
 let prevNode = render1.call(vm1);
@@ -29,6 +27,6 @@ let nextNode = render2.call(vm2);
 
 setTimeout(() => {
 	patch(prevNode, nextNode);
-}, 1000);
+}, 1000); */
 
 export default Vue;

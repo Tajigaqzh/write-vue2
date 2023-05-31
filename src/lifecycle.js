@@ -50,3 +50,18 @@ export function mountComponent(vm, el) {
 
 	//3.放到真实dom中
 }
+
+// vue核心流程 1） 创造了响应式数据  2） 模板转换成ast语法树
+// 3) 将ast语法树转换了render函数 4) 后续每次数据更新可以只执行render函数 (无需再次执行ast转化的过程)
+// render函数会去产生虚拟节点（使用响应式数据）
+// 根据生成的虚拟节点创造真实的DOM
+
+export function callHook(vm, hook) {
+	// 调用钩子函数
+	// console.log(hook);
+	const handlers = vm.$options[hook];
+	// console.log(handlers);
+	if (handlers) {
+		handlers.forEach((handler) => handler.call(vm));
+	}
+}
