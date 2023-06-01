@@ -17,22 +17,6 @@ export function createElm(vnode) {
 	return vnode.el;
 }
 
-/**
- * 更新属性
- */
-// function patchProps(el, props) {
-// 	for (let key in props) {
-// 		if (key === "style") {
-// 			// style{color:'red'}
-// 			for (let styleName in props.style) {
-// 				el.style[styleName] = props.style[styleName];
-// 			}
-// 		} else {
-// 			el.setAttribute(key, props[key]);
-// 		}
-// 	}
-// }
-
 export function patchProps(el, oldProps = {}, props = {}) {
 	// 老的属性中有，新的没有  要删除老的
 	let oldStyles = oldProps.style || {};
