@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div id="app">
+			{{age}}
+			<div>{{name}}</div>
+			<div>{{name}}</div>
+			<div>{{name}}</div>
+			<div>{{school}}</div>
+			<div>{{school.schoolName}}</div>
+			<a target="_blank" href="./com.html">computed</a>
+		</div>
+		<script src="./vue.js"></script>
+		<script>
+			/*
+			初始化数据，
+			对象的响应式
+			defineProperty数据劫持
+			 compiler编译流程解析模板参数
+			 实现模板转化成ast语法树
+			 代码生成器原理
+			 render函数
+			 虚拟dom转化成真实dom
+
+			 */
+			// console.log(Vue);
+			//vue核心就是响应式，数据变化，可以监测到数据的变化，视图自动更新
+			const vm = new Vue({
+				data() {
+					return {
+						// return {
+						name: "zsd",
+						age: 20,
+						school: {
+							schoolName: "清华大学",
+						},
+						hobby: ["eat", "drink", "play", { a: 1 }],
+					};
+				},
+				el: "#app",
+
+				//vue2的data要么是函数，要么是对象
+				//vue3中的data就是函数
+
+				//要代理这些属性，让vm.name可以访问到data中的name,并且监听变化
+			});
+			// console.log("html", vm);
+			// console.log("代理前", vm._data.name); //这样取值还要加一层_data，不方便,需要将_data中的属性代理到vm上
+
+			//加了代理之后的取值方式
+			// console.log("代理后", vm.name);
+
+			//修改值
+			// vm.name = "zsdd";
+			// console.log("修改后", vm.name);
+
+			// vm.school.schoolName = "北京大学";
+			// console.log("深层修改后", vm.school.schoolName);
+			vm.hobby[3].a = 2;
+			vm.hobby.push("sleep");
+			vm.hobby.unshift({ b: "124" });
+			// console.log("修改后", vm.hobby);
+
+			/* setTimeout(() => {
+				vm.name = "edfbheh1";
+				vm.school.schoolName = "北京大学";
+			}, 3000); */
+
+			/* 
+			异步更新
+			，比如多次更新需要反复渲染，浪费性能，
+			可以把一些更新缓存起来，一起更新
+			*/
+
+			//
+			vm.name = "dfshu";
+
+			//nextTick不是创建了一个异步任务，而是将这个任务维护到队列中
+			//同步获取
+			vm.$nextTick(() => {
+				console.log(app.innerHTML);
+			});
+
+			setTimeout(() => {
+				vm.age = 40;
+				vm.school.schoolName = "beijing";
+			}, 2000);
+		</script>
+	</body>
+</html>

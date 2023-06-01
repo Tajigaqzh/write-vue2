@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<!-- 数组更新原理 -->
+		<div id="app">
+			<div>{{arr}}</div>
+			<div>{{a}}</div>
+		</div>
+		<script src="./vue.js"></script>
+		<script>
+			const vm = new Vue({
+				data() {
+					return {
+						arr: [1, 2, 3, { a: 1 }, ["a", "b", []]], // 给数组本身增加dep 如果数组新增了某一项 我可以触发dep更新
+						a: { a: 1 }, // 给对象也增加dep， 如果后续用户增添了属性 我可以触发dep更新
+					};
+				},
+				el: "#app",
+			});
+
+			// 这里要注意的是 你改变的不是arr属性 而是arr对象的数组对象
+			setTimeout(() => {
+				// vm.arr.push(100, 100, 100)
+				// 新增属性的更新 不要使用$set（oobj，key，value 才能试图更新吗
+				// vm.a.b = 100;
+				// vm.a.__ob__.dep.notify(); // $set原理
+
+				vm.arr[4][2].push("新添加的");
+
+				vm.a.b = "133467";
+
+				//可以这么写来通知
+				// vm.a.__ob__.dep.notify();$set原理，手动通知
+			}, 2000);
+		</script>
+	</body>
+</html>
